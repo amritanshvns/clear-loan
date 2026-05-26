@@ -239,6 +239,13 @@ h3 {
   font-weight: 700;
 }
 
+.storage-state {
+  margin-top: 8px;
+  color: #0f6a47;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .workspace {
   display: grid;
   align-content: start;

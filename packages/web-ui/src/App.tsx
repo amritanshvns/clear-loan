@@ -9,44 +9,29 @@ import {
   ShieldCheck,
   TableProperties
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
-  dollarsToCents,
   generateAmortizationSchedule,
   type AmortizationSchedule,
   type LoanEvent
 } from "@openloan/core-engine";
-
-type Strategy = "REDUCE_EMI" | "REDUCE_TENURE";
-
-interface LoanFormState {
-  principal: string;
-  annualRate: string;
-  emi: string;
-  startDate: string;
-  firstEmiDate: string;
-  prepaymentAmount: string;
-  prepaymentDate: string;
-  strategy: Strategy;
-}
-
-const initialForm: LoanFormState = {
-  principal: "5000000",
-  annualRate: "8.75",
-  emi: "42500",
-  startDate: "2026-06-01",
-  firstEmiDate: "2026-07-01",
-  prepaymentAmount: "250000",
-  prepaymentDate: "2026-12-01",
-  strategy: "REDUCE_TENURE"
-};
+import type { PrepaymentStrategy } from "./persistence/loanDraftStorage";
+import { useLoanStore } from "./store/loanStore";
 
 export function App() {
-  const [form, setForm] = useState<LoanFormState>(initialForm);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const draft = useLoanStore((state) => state.draft);
+  const events = useLoanStore((state) => state.events);
+  const hydrate = useLoanStore((state) => state.hydrate);
+  const isHydrated = useLoanStore((state) => state.isHydrated);
+  const resetDraft = useLoanStore((state) => state.resetDraft);
+  const updateDraft = useLoanStore((state) => state.updateDraft);
 
-  const events = useMemo(() => buildPreviewEvents(form), [form]);
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
+
   const preview = useMemo(() => buildSchedulePreview(events), [events]);
   const finalRow = preview.schedule.rows.at(-1);
   const totalOutstandingCents =
@@ -73,7 +58,7 @@ export function App() {
               type="button"
               title="Reset sample"
               aria-label="Reset sample"
-              onClick={() => setForm(initialForm)}
+              onClick={resetDraft}
             >
               <RefreshCw size={18} aria-hidden="true" />
             </button>
@@ -82,25 +67,21 @@ export function App() {
           <div className="field-grid">
             <MoneyField
               label="Principal"
-              value={form.principal}
-              onChange={(principal) => setForm((current) => ({ ...current, principal }))}
+              value={draft.principal}
+              onChange={(principal) => updateDraft({ principal })}
             />
             <NumberField
               icon={<Percent size={17} aria-hidden="true" />}
               label="Annual rate"
               suffix="%"
-              value={form.annualRate}
-              onChange={(annualRate) => setForm((current) => ({ ...current, annualRate }))}
+              value={draft.annualRate}
+              onChange={(annualRate) => updateDraft({ annualRate })}
             />
-            <MoneyField
-              label="EMI"
-              value={form.emi}
-              onChange={(emi) => setForm((current) => ({ ...current, emi }))}
-            />
+            <MoneyField label="EMI" value={draft.emi} onChange={(emi) => updateDraft({ emi })} />
             <DateField
               label="Disbursement"
-              value={form.startDate}
-              onChange={(startDate) => setForm((current) => ({ ...current, startDate }))}
+              value={draft.startDate}
+              onChange={(startDate) => updateDraft({ startDate })}
             />
           </div>
 
@@ -117,27 +98,25 @@ export function App() {
             <div className="advanced-grid">
               <DateField
                 label="First EMI"
-                value={form.firstEmiDate}
-                onChange={(firstEmiDate) => setForm((current) => ({ ...current, firstEmiDate }))}
+                value={draft.firstEmiDate}
+                onChange={(firstEmiDate) => updateDraft({ firstEmiDate })}
               />
               <MoneyField
                 label="Prepayment"
-                value={form.prepaymentAmount}
-                onChange={(prepaymentAmount) =>
-                  setForm((current) => ({ ...current, prepaymentAmount }))
-                }
+                value={draft.prepaymentAmount}
+                onChange={(prepaymentAmount) => updateDraft({ prepaymentAmount })}
               />
               <DateField
                 label="Prepay date"
-                value={form.prepaymentDate}
-                onChange={(prepaymentDate) => setForm((current) => ({ ...current, prepaymentDate }))}
+                value={draft.prepaymentDate}
+                onChange={(prepaymentDate) => updateDraft({ prepaymentDate })}
               />
               <label className="input-field">
                 <span>Strategy</span>
                 <select
-                  value={form.strategy}
+                  value={draft.strategy}
                   onChange={(event) =>
-                    setForm((current) => ({ ...current, strategy: event.target.value as Strategy }))
+                    updateDraft({ strategy: event.target.value as PrepaymentStrategy })
                   }
                 >
                   <option value="REDUCE_TENURE">Reduce tenure</option>
@@ -163,6 +142,7 @@ export function App() {
               </li>
             ))}
           </ol>
+          <p className="storage-state">{isHydrated ? "Saved locally" : "Loading local data"}</p>
         </section>
       </aside>
 
@@ -179,10 +159,26 @@ export function App() {
         </header>
 
         <section className="metric-grid" aria-label="Loan metrics">
-          <Metric icon={<IndianRupee size={19} />} label="Disbursed" value={formatCurrency(preview.schedule.totals.disbursedCents)} />
-          <Metric icon={<Database size={19} />} label="Outstanding" value={formatCurrency(totalOutstandingCents)} />
-          <Metric icon={<Percent size={19} />} label="Interest accrued" value={formatCurrency(preview.schedule.totals.interestAccruedCents)} />
-          <Metric icon={<CalendarClock size={19} />} label="Rows" value={String(preview.schedule.rows.length)} />
+          <Metric
+            icon={<IndianRupee size={19} />}
+            label="Disbursed"
+            value={formatCurrency(preview.schedule.totals.disbursedCents)}
+          />
+          <Metric
+            icon={<Database size={19} />}
+            label="Outstanding"
+            value={formatCurrency(totalOutstandingCents)}
+          />
+          <Metric
+            icon={<Percent size={19} />}
+            label="Interest accrued"
+            value={formatCurrency(preview.schedule.totals.interestAccruedCents)}
+          />
+          <Metric
+            icon={<CalendarClock size={19} />}
+            label="Rows"
+            value={String(preview.schedule.rows.length)}
+          />
         </section>
 
         <section className="table-section" aria-labelledby="schedule-title">
@@ -312,7 +308,11 @@ function DateField(props: { label: string; value: string; onChange: (value: stri
       <span>{props.label}</span>
       <div className="input-shell">
         <CalendarClock size={17} aria-hidden="true" />
-        <input type="date" value={props.value} onChange={(event) => props.onChange(event.target.value)} />
+        <input
+          type="date"
+          value={props.value}
+          onChange={(event) => props.onChange(event.target.value)}
+        />
       </div>
     </label>
   );
@@ -326,62 +326,6 @@ function Metric(props: { icon: ReactNode; label: string; value: string }) {
       <strong>{props.value}</strong>
     </article>
   );
-}
-
-function buildPreviewEvents(form: LoanFormState): LoanEvent[] {
-  const principalCents = dollarsToCents(parseAmount(form.principal));
-  const emiCents = dollarsToCents(parseAmount(form.emi));
-  const prepaymentCents = dollarsToCents(parseAmount(form.prepaymentAmount));
-  const annualRateBps = Math.round(parseAmount(form.annualRate) * 100);
-
-  return [
-    {
-      id: "11111111-1111-4111-8111-111111111111",
-      schemaVersion: "1.0",
-      type: "DISBURSEMENT",
-      effectiveDate: form.startDate,
-      appliedAt: `${form.startDate}T00:00:00.000Z`,
-      payload: {
-        amountCents: principalCents
-      }
-    },
-    {
-      id: "22222222-2222-4222-8222-222222222222",
-      schemaVersion: "1.0",
-      type: "RATE_CHANGE",
-      effectiveDate: form.startDate,
-      appliedAt: `${form.startDate}T00:01:00.000Z`,
-      payload: {
-        annualRateBps
-      }
-    },
-    {
-      id: "33333333-3333-4333-8333-333333333333",
-      schemaVersion: "1.0",
-      type: "EMI",
-      effectiveDate: form.firstEmiDate,
-      appliedAt: `${form.firstEmiDate}T00:00:00.000Z`,
-      payload: {
-        amountCents: emiCents
-      }
-    },
-    {
-      id: "44444444-4444-4444-8444-444444444444",
-      schemaVersion: "1.0",
-      type: "PREPAYMENT",
-      effectiveDate: form.prepaymentDate,
-      appliedAt: `${form.prepaymentDate}T00:00:00.000Z`,
-      payload: {
-        amountCents: prepaymentCents,
-        strategy: form.strategy
-      }
-    }
-  ];
-}
-
-function parseAmount(value: string): number {
-  const parsed = Number(value.replaceAll(",", ""));
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 }
 
 function formatCurrency(amountCents: number): string {
