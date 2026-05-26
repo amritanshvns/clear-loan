@@ -2,11 +2,20 @@ name: Deploy web-ui to gh-pages
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch: {}
+    branches:
+      - main
+  workflow_dispatch:
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -15,34 +24,44 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Use Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
-          cache: "npm"
+          node-version: '24'
+          cache: 'npm'
 
-      - name: Install root dependencies
+      - name: Install dependencies
+        # This installs dependencies for the root and all workspaces
         run: npm ci
 
       - name: Build web-ui
-        run: npm run --workspace packages/web-ui build
+        # Corrected workspace flag syntax
+        # If deploying to a project site (username.github.io/repo-name), 
+        # consider adding Vite's base path here, e.g., -- --base=/openloan/
+        run: npm run build --workspace=packages/web-ui
 
-      - name: Upload GitHub Pages artifact
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: packages/web-ui/dist
 
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    # Required for securely authenticating with GitHub Pages
     permissions:
-      contents: read
       pages: write
       id-token: write
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v3
+        uses: actions/deploy-pages@v4
