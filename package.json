@@ -1,0 +1,22 @@
+{
+  "name": "openloan",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline-first, event-sourced loan calculation and simulation platform.",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "typecheck": "npm run typecheck --workspaces"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  }
+}
