@@ -29,11 +29,10 @@ jobs:
         run: |
           npm run --workspace packages/web-ui build
 
-      - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Deploy to gh-pages (github-pages-deploy-action)
+        uses: JamesIves/github-pages-deploy-action@v4.4.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./packages/web-ui/dist
-          publish_branch: gh-pages
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages
+          folder: packages/web-ui/dist
+          clean: true
