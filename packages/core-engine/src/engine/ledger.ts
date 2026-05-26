@@ -15,6 +15,10 @@ export interface LedgerEntry {
   event: LoanEvent;
   daysSincePreviousEvent: number;
   interestAccruedCents: number;
+  openingState: LedgerState;
+  paymentCents: number;
+  interestPaidCents: number;
+  principalPaidCents: number;
   state: LedgerState;
 }
 
@@ -38,12 +42,18 @@ export function reduceLoanEvents(events: readonly LoanEvent[]): ReduceLoanEvents
 
   for (const event of orderedEvents) {
     const accrual = accrueInterestUntil(state, event.effectiveDate);
-    state = applyLoanEvent(accrual.state, event);
+    const openingState = accrual.state;
+    const transaction = applyLoanEvent(openingState, event);
+    state = transaction.state;
 
     entries.push({
       event,
       daysSincePreviousEvent: accrual.days,
       interestAccruedCents: accrual.interestCents,
+      openingState,
+      paymentCents: transaction.paymentCents,
+      interestPaidCents: transaction.interestPaidCents,
+      principalPaidCents: transaction.principalPaidCents,
       state
     });
   }
@@ -88,19 +98,38 @@ function accrueInterestUntil(
   };
 }
 
-function applyLoanEvent(state: LedgerState, event: LoanEvent): LedgerState {
-  switch (event.type) {
-    case "DISBURSEMENT":
-      return {
-        ...state,
-        principalCents: state.principalCents + event.payload.amountCents
-      };
+interface AppliedLoanEvent {
+  state: LedgerState;
+  paymentCents: number;
+  interestPaidCents: number;
+  principalPaidCents: number;
+}
 
-    case "RATE_CHANGE":
+function applyLoanEvent(state: LedgerState, event: LoanEvent): AppliedLoanEvent {
+  switch (event.type) {
+    case "DISBURSEMENT": {
       return {
-        ...state,
-        annualRateBps: event.payload.annualRateBps
+        state: {
+          ...state,
+          principalCents: state.principalCents + event.payload.amountCents
+        },
+        paymentCents: 0,
+        interestPaidCents: 0,
+        principalPaidCents: 0
       };
+    }
+
+    case "RATE_CHANGE": {
+      return {
+        state: {
+          ...state,
+          annualRateBps: event.payload.annualRateBps
+        },
+        paymentCents: 0,
+        interestPaidCents: 0,
+        principalPaidCents: 0
+      };
+    }
 
     case "PREPAYMENT":
       return applyPrincipalPayment(state, event.payload.amountCents, event.id);
@@ -114,7 +143,7 @@ function applyPrincipalPayment(
   state: LedgerState,
   paymentCents: number,
   eventId: string
-): LedgerState {
+): AppliedLoanEvent {
   if (paymentCents > state.principalCents) {
     throw new LoanMathError(
       "Prepayment cannot exceed outstanding principal",
@@ -124,12 +153,17 @@ function applyPrincipalPayment(
   }
 
   return {
-    ...state,
-    principalCents: state.principalCents - paymentCents
+    state: {
+      ...state,
+      principalCents: state.principalCents - paymentCents
+    },
+    paymentCents,
+    interestPaidCents: 0,
+    principalPaidCents: paymentCents
   };
 }
 
-function applyEmiPayment(state: LedgerState, paymentCents: number, eventId: string): LedgerState {
+function applyEmiPayment(state: LedgerState, paymentCents: number, eventId: string): AppliedLoanEvent {
   const totalOutstandingCents = state.principalCents + state.accruedInterestCents;
 
   if (totalOutstandingCents === 0) {
@@ -145,8 +179,13 @@ function applyEmiPayment(state: LedgerState, paymentCents: number, eventId: stri
   const principalPaidCents = paymentCents - interestPaidCents;
 
   return {
-    ...state,
-    accruedInterestCents: state.accruedInterestCents - interestPaidCents,
-    principalCents: state.principalCents - principalPaidCents
+    state: {
+      ...state,
+      accruedInterestCents: state.accruedInterestCents - interestPaidCents,
+      principalCents: state.principalCents - principalPaidCents
+    },
+    paymentCents,
+    interestPaidCents,
+    principalPaidCents
   };
 }

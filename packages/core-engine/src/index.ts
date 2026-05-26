@@ -6,3 +6,4 @@ export * from "./events/schemas";
 export * from "./events/types";
 export * from "./math/interest";
 export * from "./math/money";
+export * from "./schedule/amortization";
