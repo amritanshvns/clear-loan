@@ -90,7 +90,8 @@ Prepare for public beta and iterate based on telemetry and feedback.
 
 ## Next Steps (short-term)
 
-1. Create `golden-datasets/` and add first dataset (TST-01).
-2. Draft telemetry spec and consent language (MON-01).
-3. Add Dependabot and baseline npm audit fixes (SEC-01).
-4. Prepare GitHub Actions for gh-pages deploy (REL-01).
+- Wire CSV export in UI — not-started
+- Implement event editor UI — not-started
+- Add JSON import/export for events — not-started
+- Add PWA support — not-started
+- Add web-ui integration tests — not-started
