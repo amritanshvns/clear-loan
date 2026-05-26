@@ -41,4 +41,22 @@ describe("calculateActual365InterestCents", () => {
       })
     ).toThrow("principalCents must be non-negative");
   });
+
+  it("rejects invalid rates and periods", () => {
+    expect(() =>
+      calculateActual365InterestCents({
+        principalCents: 100_000,
+        annualRateBps: -1,
+        days: 30
+      })
+    ).toThrow("annualRateBps must be a non-negative integer");
+
+    expect(() =>
+      calculateActual365InterestCents({
+        principalCents: 100_000,
+        annualRateBps: 1_000,
+        days: -1
+      })
+    ).toThrow("days must be a non-negative integer");
+  });
 });

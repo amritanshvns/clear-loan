@@ -4,13 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vite build",
-    "dev": "vite --host 127.0.0.1",
-    "test": "vitest run",
+    "build": "vite build --configLoader native",
+    "dev": "vite --host 127.0.0.1 --configLoader native",
+    "test": "vitest run --passWithNoTests --configLoader native",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@openloan/core-engine": "workspace:*",
+    "@openloan/core-engine": "0.1.0",
     "@tanstack/react-table": "^8.21.3",
     "idb-keyval": "^6.2.2",
     "lucide-react": "^0.542.0",

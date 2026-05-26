@@ -64,14 +64,12 @@ export function generateAmortizationSchedule(events: readonly LoanEvent[]): Amor
 }
 
 function toScheduleRow(entry: LedgerEntry, index: number): AmortizationScheduleRow {
-  const periodStartDate = entry.openingState.asOfDate ?? entry.event.effectiveDate;
-
   return {
     rowId: `${String(index + 1).padStart(6, "0")}-${entry.event.id}`,
     eventId: entry.event.id,
     eventType: entry.event.type,
-    periodStartDate,
-    periodEndDate: entry.event.effectiveDate,
+    periodStartDate: entry.periodStartDate,
+    periodEndDate: entry.periodEndDate,
     days: entry.daysSincePreviousEvent,
     annualRateBps: entry.openingState.annualRateBps,
     openingPrincipalCents: entry.openingState.principalCents,

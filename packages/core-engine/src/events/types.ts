@@ -14,7 +14,7 @@ export interface BaseLoanEvent {
   type: LoanEventType;
   effectiveDate: string;
   appliedAt: string;
-  metadata?: Record<string, string>;
+  metadata?: Record<string, string> | undefined;
 }
 
 export interface DisbursementEvent extends BaseLoanEvent {

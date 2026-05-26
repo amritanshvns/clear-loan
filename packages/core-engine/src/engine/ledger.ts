@@ -13,6 +13,8 @@ export interface LedgerState {
 
 export interface LedgerEntry {
   event: LoanEvent;
+  periodStartDate: string;
+  periodEndDate: string;
   daysSincePreviousEvent: number;
   interestAccruedCents: number;
   openingState: LedgerState;
@@ -48,6 +50,8 @@ export function reduceLoanEvents(events: readonly LoanEvent[]): ReduceLoanEvents
 
     entries.push({
       event,
+      periodStartDate: accrual.periodStartDate,
+      periodEndDate: event.effectiveDate,
       daysSincePreviousEvent: accrual.days,
       interestAccruedCents: accrual.interestCents,
       openingState,
@@ -68,18 +72,20 @@ export function reduceLoanEvents(events: readonly LoanEvent[]): ReduceLoanEvents
 function accrueInterestUntil(
   state: LedgerState,
   effectiveDate: string
-): { state: LedgerState; days: number; interestCents: number } {
+): { state: LedgerState; periodStartDate: string; days: number; interestCents: number } {
   if (state.asOfDate === null) {
     return {
       state: {
         ...state,
         asOfDate: effectiveDate
       },
+      periodStartDate: effectiveDate,
       days: 0,
       interestCents: 0
     };
   }
 
+  const periodStartDate = state.asOfDate;
   const days = daysBetweenLoanDates(state.asOfDate, effectiveDate);
   const interestCents = calculateActual365InterestCents({
     principalCents: state.principalCents,
@@ -93,6 +99,7 @@ function accrueInterestUntil(
       accruedInterestCents: state.accruedInterestCents + interestCents,
       asOfDate: effectiveDate
     },
+    periodStartDate,
     days,
     interestCents
   };
