@@ -1,8 +1,15 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "jsx": "react-jsx",
+    "paths": {
+      "@openloan/core-engine": [
+        "../core-engine/src/index.ts"
+      ]
+    },
     "types": [
+      "node",
       "vite/client"
     ]
   },
