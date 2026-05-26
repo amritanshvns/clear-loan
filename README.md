@@ -1,6 +1,6 @@
-# OpenLoan
+# OpenLoan [![Deploy web-ui to gh-pages](https://github.com/amritanshvns/clear-loan/actions/workflows/deploy.yml/badge.svg)](https://github.com/amritanshvns/clear-loan/actions/workflows/deploy.yml)
 
-OpenLoan is an offline-first, privacy-first loan calculation and simulation platform. [![Deploy web-ui to gh-pages](https://github.com/amritanshvns/clear-loan/actions/workflows/deploy.yml/badge.svg)](https://github.com/amritanshvns/clear-loan/actions/workflows/deploy.yml)
+OpenLoan is an offline-first, privacy-first loan calculation and simulation platform. 
 
 Repository structure (monorepo):
 
