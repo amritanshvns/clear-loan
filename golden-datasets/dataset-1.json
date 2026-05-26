@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "id": "dataset-1",
+    "description": "Simple 5-year fixed loan with an early prepayment on year 2",
+    "currency": "USD",
+    "created": "2026-05-26T00:00:00Z"
+  },
+  "events": [
+    {
+      "type": "DISBURSEMENT",
+      "date": "2021-01-01",
+      "amount": 100000,
+      "note": "Initial disbursement"
+    },
+    {
+      "type": "RATE_CHANGE",
+      "date": "2021-01-01",
+      "annualRate": 0.05,
+      "note": "Initial rate 5%"
+    },
+    {
+      "type": "SCHEDULE",
+      "date": "2021-01-01",
+      "termMonths": 60,
+      "paymentFrequency": "MONTHLY",
+      "note": "Amortizing schedule"
+    },
+    {
+      "type": "PREPAYMENT",
+      "date": "2022-03-15",
+      "amount": 10000,
+      "note": "Borrower made a large prepayment"
+    }
+  ],
+  "expectedSnapshot": {
+    "asOf": "2022-03-16",
+    "remainingPrincipal": 85000,
+    "accruedInterest": 0,
+    "nextPayment": {
+      "dueDate": "2022-04-01",
+      "amount": 1887.12
+    },
+    "notes": "Snapshot is illustrative; exact values depend on engine's day-count and rounding rules. Use as regression target for engine implementation."
+  }
+}
