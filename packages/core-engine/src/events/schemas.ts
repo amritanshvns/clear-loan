@@ -10,7 +10,7 @@ const baseEventSchema = z.object({
   schemaVersion: z.literal(LOAN_EVENT_SCHEMA_VERSION),
   effectiveDate: isoDateSchema,
   appliedAt: z.string().datetime({ offset: true }),
-  metadata: z.record(z.string()).optional()
+  metadata: z.record(z.string(), z.string()).optional()
 });
 
 const positiveCentsSchema = z.number().int().positive();
